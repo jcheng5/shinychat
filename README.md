@@ -1,14 +1,12 @@
----
-output: github_document
----
-
 # shinychat
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/jcheng5/shinychat/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jcheng5/shinychat/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of shinychat is to ...
+Chat UI component for [Shiny for R](https://shiny.posit.co/).
+
+(For [Shiny for Python](https://shiny.posit.co/py/), see [ui.Chat](https://shiny.posit.co/py/components/display-messages/chat/).)
 
 ## Installation
 
@@ -21,4 +19,22 @@ devtools::install_github("jcheng5/shinychat")
 
 ## Example
 
-TODO
+```r
+library(shiny)
+library(shinychat)
+
+ui <- bslib::page_fluid(
+  chat_ui("chat")
+)
+
+server <- function(input, output, session) {
+  chat <- elmer::new_chat_openai(system_prompt = "You're a bitter and sad assistant")
+  
+  observeEvent(input$chat_user_input, {
+    stream <- chat$stream(input$chat_user_input)
+    chat_append_stream("chat", stream)
+  })
+}
+
+shinyApp(ui, server)
+```
