@@ -3,6 +3,7 @@ Title: Chat UI component for Shiny
 Version: 0.0.0.9000
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = c("aut", "cre")),
+    person("Carson", "Sievert", , "carson@posit.co", role = c("aut")),
     person("Posit Software, PBC", role = c("cph", "fnd"))
   )
 Description: Provides a chat UI component for Shiny apps.
