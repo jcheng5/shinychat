@@ -1,0 +1,22 @@
+Package: shinychat
+Title: Chat UI component for Shiny
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Joe", "Cheng", , "joe@posit.co", role = c("aut", "cre")),
+    person("Posit Software, PBC", role = c("cph", "fnd"))
+  )
+Description: Provides a chat UI component for Shiny apps.
+License: MIT + file LICENSE
+URL: https://github.com/jcheng5/shinychat, https://jcheng5.github.io/shinychat/
+BugReports: https://github.com/jcheng5/shinychat/issues
+Imports:
+    htmltools,
+    shiny
+Suggests: 
+    testthat (>= 3.0.0),
+    promises,
+    coro
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Config/testthat/edition: 3
