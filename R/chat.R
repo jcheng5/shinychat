@@ -4,10 +4,14 @@
 # trimming of the message history to fit within the context window; these
 # are left for the caller to handle in the R version.
 
+#' @importFrom htmltools tag css
+#' @importFrom coro async
+NULL
+
 chat_deps <- function() {
   htmltools::htmlDependency(
     "shinychat",
-    packageVersion("shinychat"),
+    utils::packageVersion("shinychat"),
     package = "shinychat",
     src = "chat",
     script = "chat.js",
@@ -25,7 +29,7 @@ chat_ui <- function(
     ...) {
   tag("shiny-chat-container", list(
     id = id,
-    style = htmltools::css(
+    style = css(
       width = width,
       height = height
     ),
@@ -36,6 +40,7 @@ chat_ui <- function(
   ))
 }
 
+#' @importFrom shiny getDefaultReactiveDomain
 #' @export
 chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, session = getDefaultReactiveDomain()) {
   if (identical(msg[["role"]], "system")) {
@@ -84,8 +89,10 @@ chat_append_stream <- function(id, stream, session = getDefaultReactiveDomain())
   chat_append_stream_impl(id, stream, session)
 }
 
+utils:::globalVariables(c("generator_env", "exits"))
+
 chat_append_stream_impl <- NULL
-rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, session = getDefaultReactiveDomain()) {
+rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, session = shiny::getDefaultReactiveDomain()) {
   chat_append_message(id, list(role = "assistant", content = ""), chunk = "start", session = session)
   tryCatch(
     {
