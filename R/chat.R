@@ -19,6 +19,18 @@ chat_deps <- function() {
   )
 }
 
+#' Create a chat UI element
+#'
+#' @param id The ID of the chat element
+#' @param placeholder The placeholder text for the chat's user input field
+#' @param width The CSS width of the chat element
+#' @param height The CSS height of the chat element
+#' @param fill Whether the chat element should try to vertically fill its
+#'   container, if the container is
+#'   [fillable](https://rstudio.github.io/bslib/articles/filling/index.html)
+#' @param ... Extra HTML attributes to include on the chat element
+#' @returns A Shiny tag object, suitable for inclusion in a Shiny UI
+#'
 #' @export
 chat_ui <- function(
     id,
@@ -38,6 +50,26 @@ chat_ui <- function(
     chat_deps(),
     ...
   ))
+}
+
+#' Append an assistant response to a chat control
+#'
+#' @param id The ID of the chat element
+#' @param response The message or message stream to append to the chat element.
+#'
+#' @export
+chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
+  if (is.character(response)) {
+    # string => generator
+    stream <- coro::gen(yield(response))
+  } else if (promises::is.promising(response)) {
+    # promise => async generator
+    stream <- coro::gen(yield(response))
+  } else if (inherits(response, "coro_generator_instance")) {
+    # Already a generator (sync or async)
+    stream <- response
+  }
+  chat_append_stream(id, stream, session = session)
 }
 
 #' @importFrom shiny getDefaultReactiveDomain
@@ -99,9 +131,9 @@ rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, sessi
       for (msg in stream) {
         if (promises::is.promising(msg)) {
           msg <- await(msg)
-          if (coro::is_exhausted(msg)) {
-            break
-          }
+        }
+        if (coro::is_exhausted(msg)) {
+          break
         }
         chat_append_message(id, list(role = "assistant", content = msg), chunk = TRUE, operation = "append", session = session)
       }
