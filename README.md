@@ -13,11 +13,15 @@ Chat UI component for [Shiny for R](https://shiny.posit.co/).
 You can install the development version of shinychat from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("jcheng5/shinychat")
+# install.packages("pak")
+pak::pak("jcheng5/shinychat")
 ```
 
 ## Example
+
+To run this example, you'll first need to create an OpenAI API key, and set it in your environment as `OPENAI_API_KEY`.
+
+You'll also need to call `pak::pak("hadley/elmer")` to install the {[elmer](https://github.com/hadley/elmer)} package.
 
 ```r
 library(shiny)
