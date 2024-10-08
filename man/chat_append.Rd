@@ -9,7 +9,9 @@ chat_append(id, response, session = getDefaultReactiveDomain())
 \arguments{
 \item{id}{The ID of the chat element}
 
-\item{response}{The message or message stream to append to the chat element.}
+\item{response}{The message or message stream to append to the chat element}
+
+\item{session}{The Shiny session object}
 }
 \description{
 Append an assistant response to a chat control

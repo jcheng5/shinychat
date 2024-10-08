@@ -2,7 +2,6 @@
 
 export(chat_append)
 export(chat_append_message)
-export(chat_append_stream)
 export(chat_ui)
 importFrom(coro,async)
 importFrom(htmltools,css)

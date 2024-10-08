@@ -55,7 +55,8 @@ chat_ui <- function(
 #' Append an assistant response to a chat control
 #'
 #' @param id The ID of the chat element
-#' @param response The message or message stream to append to the chat element.
+#' @param response The message or message stream to append to the chat element
+#' @param session The Shiny session object
 #'
 #' @export
 chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
@@ -72,6 +73,28 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
   chat_append_stream(id, stream, session = session)
 }
 
+#' Low-level function to append a message to a chat control
+#'
+#' For advanced users who want to control the message chunking behavior. Most
+#' users should use [chat_append()] instead.
+#'
+#' @param id The ID of the chat element
+#' @param msg The message to append. Should be a named list with `role` and
+#'   `content` fields. The `role` field should be either "user" or "assistant".
+#'   The `content` field should be a string containing the message content, in
+#'   Markdown format.
+#' @param chunk Whether `msg` is just a chunk of a message, and if so, what
+#'   type. If `FALSE`, then `msg` is a complete message. If `"start"`, then
+#'   `msg` is the first chunk of a multi-chunk message. If `"end"`, then `msg`
+#'   is the last chunk of a multi-chunk message. If `TRUE`, then `msg` is an
+#'   intermediate chunk of a multi-chunk message. Default is `FALSE`.
+#' @param operation The operation to perform on the message. If `NULL`, then
+#'   `msg` replaces the latest message. If `"append"`, then `msg` is appended
+#'   to the latest message. Default is `NULL`.
+#' @param session The Shiny session object
+#'
+#' @returns Returns nothing of consequence.
+#'
 #' @importFrom shiny getDefaultReactiveDomain
 #' @export
 chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, session = getDefaultReactiveDomain()) {
@@ -116,12 +139,11 @@ chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, sessio
   ))
 }
 
-#' @export
 chat_append_stream <- function(id, stream, session = getDefaultReactiveDomain()) {
   chat_append_stream_impl(id, stream, session)
 }
 
-utils:::globalVariables(c("generator_env", "exits"))
+utils:::globalVariables(c("generator_env", "exits", "yield"))
 
 chat_append_stream_impl <- NULL
 rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, session = shiny::getDefaultReactiveDomain()) {
