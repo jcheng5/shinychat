@@ -14,7 +14,7 @@ chat_deps <- function() {
     utils::packageVersion("shinychat"),
     package = "shinychat",
     src = "chat",
-    script = "chat.js",
+    script = list(src = "chat.js", type = "module"),
     stylesheet = "chat.css"
   )
 }
@@ -76,7 +76,10 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
     # Already a generator (sync or async)
     stream <- response
   }
-  chat_append_stream(id, stream, session = session)
+  do_stream <- function() {
+    chat_append_stream(id, stream, session = session)
+  }
+  session$onFlushed(do_stream)
 }
 
 #' Low-level function to append a message to a chat control
