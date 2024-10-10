@@ -12,9 +12,10 @@ URL: https://github.com/jcheng5/shinychat, https://jcheng5.github.io/shinychat/
 BugReports: https://github.com/jcheng5/shinychat/issues
 Imports:
     htmltools,
+    bslib,
     shiny,
     coro
-Suggests: 
+Suggests:
     testthat (>= 3.0.0),
     promises,
     rlang

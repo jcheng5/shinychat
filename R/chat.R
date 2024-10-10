@@ -39,17 +39,23 @@ chat_ui <- function(
     height = "auto",
     fill = TRUE,
     ...) {
-  tag("shiny-chat-container", list(
+  res <- tag("shiny-chat-container", list(
     id = id,
     style = css(
       width = width,
       height = height
     ),
     placeholder = placeholder,
-    fill = fill,
+    fill = if (isTRUE(fill)) NA else NULL,
     chat_deps(),
     ...
   ))
+
+  if (isTRUE(fill)) {
+    res <- bslib::as_fill_carrier(res)
+  }
+
+  res
 }
 
 #' Append an assistant response to a chat control
