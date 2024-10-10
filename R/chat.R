@@ -14,7 +14,7 @@ chat_deps <- function() {
     utils::packageVersion("shinychat"),
     package = "shinychat",
     src = "chat",
-    script = "chat.js",
+    script = list(src = "chat.js", type = "module"),
     stylesheet = "chat.css"
   )
 }
