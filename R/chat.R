@@ -75,6 +75,8 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
   } else if (inherits(response, "coro_generator_instance")) {
     # Already a generator (sync or async)
     stream <- response
+  } else {
+    stop("Unexpected message type; chat_append() expects a string, a string generator, a string promise, or a string promise generator")
   }
   chat_append_stream(id, stream, session = session)
 }
