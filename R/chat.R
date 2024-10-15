@@ -22,23 +22,49 @@ chat_deps <- function() {
 #' Create a chat UI element
 #'
 #' @param id The ID of the chat element
+#' @param ... Extra HTML attributes to include on the chat element
+#' @param messages A list of messages to prepopulate the chat with. Each
+#'   message can be a string or a named list with `content` and `role` fields.
 #' @param placeholder The placeholder text for the chat's user input field
 #' @param width The CSS width of the chat element
 #' @param height The CSS height of the chat element
 #' @param fill Whether the chat element should try to vertically fill its
 #'   container, if the container is
 #'   [fillable](https://rstudio.github.io/bslib/articles/filling/index.html)
-#' @param ... Extra HTML attributes to include on the chat element
 #' @returns A Shiny tag object, suitable for inclusion in a Shiny UI
 #'
 #' @export
 chat_ui <- function(
     id,
+    ...,
+    messages = NULL,
     placeholder = "Enter a message...",
     width = "min(680px, 100%)",
     height = "auto",
-    fill = TRUE,
-    ...) {
+    fill = TRUE) {
+
+  attrs <- rlang::list2(...)
+  if (!all(nzchar(rlang::names2(attrs)))) {
+    stop("All arguments in ... must be named.")
+  }
+
+  message_tags <- lapply(messages, function(x) {
+    if (is.character(x)) {
+      x <- list(content = x, role = "assistant")
+    } else if (is.list(x)) {
+      if (!("content" %in% names(x))) {
+        stop("Each message must have a 'content' key.")
+      }
+      if (!("role" %in% names(x))) {
+        stop("Each message must have a 'role' key.")
+      }
+    } else {
+      stop("Each message must be a string or a named list.")
+    }
+
+    tag("shiny-chat-message", list(content = x[["content"]], role = x[["role"]))
+  })
+
   res <- tag("shiny-chat-container", list(
     id = id,
     style = css(
@@ -47,6 +73,8 @@ chat_ui <- function(
     ),
     placeholder = placeholder,
     fill = if (isTRUE(fill)) NA else NULL,
+    tag("shiny-chat-messages", message_tags),
+    tag("shiny-chat-input", message_tags)
     chat_deps(),
     ...
   ))
@@ -104,7 +132,8 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
 #' @importFrom shiny getDefaultReactiveDomain
 #' @export
 chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, session = getDefaultReactiveDomain()) {
-  if (identical(msg[["role"]], "system")) {
+  if (!isTRUE(msg[["role"]] %in% c("user", "assistant"))) {
+    warning("Invalid role argument; must be 'user' or 'assistant'")
     return()
   }
 
