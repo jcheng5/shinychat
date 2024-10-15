@@ -62,10 +62,16 @@ chat_ui <- function(
       stop("Each message must be a string or a named list.")
     }
 
-    tag("shiny-chat-message", list(content = x[["content"]], role = x[["role"]))
+    if (isTRUE(x[["role"]] == "user")) {
+      tag_name <- "shiny-user-message"
+    } else {
+      tag_name <- "shiny-chat-message"
+    }
+
+    tag(tag_name, list(content = x[["content"]]))
   })
 
-  res <- tag("shiny-chat-container", list(
+  res <- tag("shiny-chat-container", rlang::list2(
     id = id,
     style = css(
       width = width,
@@ -73,10 +79,10 @@ chat_ui <- function(
     ),
     placeholder = placeholder,
     fill = if (isTRUE(fill)) NA else NULL,
+    ...,
     tag("shiny-chat-messages", message_tags),
-    tag("shiny-chat-input", message_tags)
-    chat_deps(),
-    ...
+    tag("shiny-chat-input", list(id=paste0(id, "_user_input"), placeholder=placeholder)),
+    chat_deps()
   ))
 
   if (isTRUE(fill)) {
