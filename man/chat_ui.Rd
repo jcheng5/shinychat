@@ -6,15 +6,21 @@
 \usage{
 chat_ui(
   id,
+  ...,
+  messages = NULL,
   placeholder = "Enter a message...",
   width = "min(680px, 100\%)",
   height = "auto",
-  fill = TRUE,
-  ...
+  fill = TRUE
 )
 }
 \arguments{
 \item{id}{The ID of the chat element}
+
+\item{...}{Extra HTML attributes to include on the chat element}
+
+\item{messages}{A list of messages to prepopulate the chat with. Each
+message can be a string or a named list with \code{content} and \code{role} fields.}
 
 \item{placeholder}{The placeholder text for the chat's user input field}
 
@@ -25,8 +31,6 @@ chat_ui(
 \item{fill}{Whether the chat element should try to vertically fill its
 container, if the container is
 \href{https://rstudio.github.io/bslib/articles/filling/index.html}{fillable}}
-
-\item{...}{Extra HTML attributes to include on the chat element}
 }
 \value{
 A Shiny tag object, suitable for inclusion in a Shiny UI

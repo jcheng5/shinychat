@@ -11,6 +11,7 @@ License: MIT + file LICENSE
 URL: https://github.com/jcheng5/shinychat, https://jcheng5.github.io/shinychat/
 BugReports: https://github.com/jcheng5/shinychat/issues
 Imports:
+    rlang,
     htmltools,
     bslib,
     shiny,
