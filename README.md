@@ -21,7 +21,7 @@ pak::pak("jcheng5/shinychat")
 
 To run this example, you'll first need to create an OpenAI API key, and set it in your environment as `OPENAI_API_KEY`.
 
-You'll also need to call `pak::pak("hadley/elmer")` to install the {[elmer](https://github.com/hadley/elmer)} package.
+You'll also need to call `pak::pak("tidyverse/elmer")` to install the {[elmer](https://elmer.tidyverse.org/)} package.
 
 ```r
 library(shiny)

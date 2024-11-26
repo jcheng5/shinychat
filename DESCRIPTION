@@ -11,15 +11,14 @@ License: MIT + file LICENSE
 URL: https://github.com/jcheng5/shinychat, https://jcheng5.github.io/shinychat/
 BugReports: https://github.com/jcheng5/shinychat/issues
 Imports:
-    rlang,
-    htmltools,
     bslib,
-    shiny,
-    coro
+    coro,
+    htmltools,
+    rlang,
+    shiny
 Suggests:
-    testthat (>= 3.0.0),
     promises,
-    rlang
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
