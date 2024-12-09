@@ -15,10 +15,12 @@ Imports:
     coro,
     htmltools,
     rlang,
-    shiny
+    shiny (> 1.9.1)
 Suggests:
     promises,
     testthat (>= 3.0.0)
+Remotes:
+    rstudio/shiny
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
