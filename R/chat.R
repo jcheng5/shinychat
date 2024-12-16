@@ -20,6 +20,15 @@ chat_deps <- function() {
 }
 
 #' Create a chat UI element
+#' 
+#' @description
+#' Inserts a chat UI element into a Shiny UI, which includes a scrollable
+#' section for displaying chat messages, and an input field for the user to
+#' enter new messages.
+#' 
+#' To respond to user input, listen for `input$ID_user_input` (for example, if
+#' `id="my_chat"`, user input will be at `input$my_chat_user_input`), and use
+#' [chat_append()] to append messages to the chat.
 #'
 #' @param id The ID of the chat element
 #' @param ... Extra HTML attributes to include on the chat element
@@ -32,6 +41,31 @@ chat_deps <- function() {
 #'   container, if the container is
 #'   [fillable](https://rstudio.github.io/bslib/articles/filling/index.html)
 #' @returns A Shiny tag object, suitable for inclusion in a Shiny UI
+#' 
+#' @examplesIf interactive()
+#' library(shiny)
+#' library(bslib)
+#' library(shinychat)
+#'
+#' ui <- page_fillable(
+#'   chat_ui("chat", fill = TRUE)
+#' )
+#'
+#' server <- function(input, output, session) {
+#'   observeEvent(input$chat_user_input, {
+#'     # In a real app, this would call out to a chat model or API,
+#'     # perhaps using {elmer}.
+#'     response <- paste0(
+#'       "You said:\n\n",
+#'       "<blockquote>",
+#'       htmltools::htmlEscape(input$chat_user_input),
+#'       "</blockquote>"
+#'     )
+#'     chat_append("chat", response)
+#'   })
+#' }
+#'
+#' shinyApp(ui, server)
 #'
 #' @export
 chat_ui <- function(
@@ -183,7 +217,26 @@ chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, sessio
 }
 
 chat_append_stream <- function(id, stream, session = getDefaultReactiveDomain()) {
-  chat_append_stream_impl(id, stream, session)
+  result <- chat_append_stream_impl(id, stream, session)
+  # Handle erroneous result...
+  promises::catch(result, function(reason) {
+    chat_append_message(
+      id,
+      list(
+        role = "assistant",
+        content = paste0("\n\n**An error occurred:** ", conditionMessage(reason))
+      ),
+      chunk = "end",
+      operation = "append",
+      session = session
+    )
+  })
+  # ...but also return it, so the caller can also handle it if they want. Note
+  # that we're not returning the result of `promises::catch`; we want to return
+  # a rejected promise (so the caller can see the error) that was already
+  # handled (so there's no "unhandled promise error" warning if the caller
+  # chooses not to do anything with it).
+  result
 }
 
 utils:::globalVariables(c("generator_env", "exits", "yield"))
@@ -191,21 +244,14 @@ utils:::globalVariables(c("generator_env", "exits", "yield"))
 chat_append_stream_impl <- NULL
 rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, session = shiny::getDefaultReactiveDomain()) {
   chat_append_message(id, list(role = "assistant", content = ""), chunk = "start", session = session)
-  tryCatch(
-    {
-      for (msg in stream) {
-        if (promises::is.promising(msg)) {
-          msg <- await(msg)
-        }
-        if (coro::is_exhausted(msg)) {
-          break
-        }
-        chat_append_message(id, list(role = "assistant", content = msg), chunk = TRUE, operation = "append", session = session)
-      }
-      chat_append_message(id, list(role = "assistant", content = ""), chunk = "end", operation = "append", session = session)
-    },
-    error = function(err) {
-      chat_append_message(id, list(role = "assistant", content = paste0("An error occurred: ", conditionMessage(err))), chunk = "end", operation = "append", session = session)
+  for (msg in stream) {
+    if (promises::is.promising(msg)) {
+      msg <- await(msg)
     }
-  )
+    if (coro::is_exhausted(msg)) {
+      break
+    }
+    chat_append_message(id, list(role = "assistant", content = msg), chunk = TRUE, operation = "append", session = session)
+  }
+  chat_append_message(id, list(role = "assistant", content = ""), chunk = "end", operation = "append", session = session)
 }))

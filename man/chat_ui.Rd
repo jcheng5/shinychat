@@ -36,5 +36,38 @@ container, if the container is
 A Shiny tag object, suitable for inclusion in a Shiny UI
 }
 \description{
-Create a chat UI element
+Inserts a chat UI element into a Shiny UI, which includes a scrollable
+section for displaying chat messages, and an input field for the user to
+enter new messages.
+
+To respond to user input, listen for \code{input$ID_user_input} (for example, if
+\code{id="my_chat"}, user input will be at \code{input$my_chat_user_input}), and use
+\code{\link[=chat_append]{chat_append()}} to append messages to the chat.
+}
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+library(shiny)
+library(bslib)
+library(shinychat)
+
+ui <- page_fillable(
+  chat_ui("chat", fill = TRUE)
+)
+
+server <- function(input, output, session) {
+  observeEvent(input$chat_user_input, {
+    # In a real app, this would call out to a chat model or API,
+    # perhaps using {elmer}.
+    response <- paste0(
+      "You said:\n\n",
+      "<blockquote>",
+      htmltools::htmlEscape(input$chat_user_input),
+      "</blockquote>"
+    )
+    chat_append("chat", response)
+  })
+}
+
+shinyApp(ui, server)
+\dontshow{\}) # examplesIf}
 }
