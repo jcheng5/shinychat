@@ -13,9 +13,12 @@ chat_deps <- function() {
     "shinychat",
     utils::packageVersion("shinychat"),
     package = "shinychat",
-    src = "chat",
-    script = list(src = "chat.js", type = "module"),
-    stylesheet = "chat.css"
+    src = "lib/shiny",
+    script = list(
+      list(src = "chat/chat.js", type = "module"),
+      list(src = "text-area/textarea-autoresize.js", type = "module")
+    ),
+    stylesheet = c("chat/chat.css", "text-area/textarea-autoresize.css")
   )
 }
 
