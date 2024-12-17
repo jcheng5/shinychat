@@ -16,13 +16,11 @@ Imports:
     bslib,
     coro,
     htmltools,
+    promises (>= 1.3.2),
     rlang,
-    shiny (> 1.9.1)
+    shiny (>= 1.10.0)
 Suggests:
-    promises,
     testthat (>= 3.0.0)
-Remotes:
-    rstudio/shiny
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

@@ -54,19 +54,36 @@ promise returned by \code{chat_append}.
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 library(shiny)
+library(coro)
 library(bslib)
-library(elmer)
 library(shinychat)
+
+# Dumbest chatbot in the world: ignores user input and chooses
+# a random, vague response. For a chatbot, try {elmer}.
+fake_chatbot <- async_generator(function(input) {
+  responses <- c(
+    "What does that suggest to you?",
+    "I see.",
+    "I'm not sure I understand you fully.",
+    "What do you think?",
+    "Can you elaborate on that?",
+    "Interesting question! Let's examine thi... **See more**"
+  )
+
+  await(async_sleep(1))
+  for (chunk in strsplit(sample(responses, 1), "")[[1]]) {
+    yield(chunk)
+    await(async_sleep(0.02))
+  }
+})
 
 ui <- page_fillable(
   chat_ui("chat", fill = TRUE)
 )
 
 server <- function(input, output, session) {
-  chat <- chat_openai(model = "gpt-4o")
-
   observeEvent(input$chat_user_input, {
-    response <- chat$stream_async(input$chat_user_input)
+    response <- fake_chatbot(input$chat_user_input)
     chat_append("chat", response)
   })
 }
