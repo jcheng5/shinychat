@@ -57,7 +57,7 @@ ui <- page_fillable(
 server <- function(input, output, session) {
   observeEvent(input$chat_user_input, {
     # In a real app, this would call out to a chat model or API,
-    # perhaps using {elmer}.
+    # perhaps using the 'elmer' package.
     response <- paste0(
       "You said:\n\n",
       "<blockquote>",

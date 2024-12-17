@@ -48,7 +48,7 @@ library(bslib)
 library(shinychat)
 
 # Dumbest chatbot in the world: ignores user input and chooses
-# a random, vague response. For a chatbot, try {elmer}.
+# a random, vague response.
 fake_chatbot <- async_generator(function(id, input) {
   responses <- c(
     "What does that suggest to you?",

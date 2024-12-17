@@ -57,7 +57,7 @@ chat_deps <- function() {
 #' server <- function(input, output, session) {
 #'   observeEvent(input$chat_user_input, {
 #'     # In a real app, this would call out to a chat model or API,
-#'     # perhaps using {elmer}.
+#'     # perhaps using the 'elmer' package.
 #'     response <- paste0(
 #'       "You said:\n\n",
 #'       "<blockquote>",
@@ -134,7 +134,7 @@ chat_ui <- function(
 #' @description
 #' The `chat_append` function appends a message to an existing chat control. The
 #' `response` can be a string, string generator, string promise, or string
-#' promise generator (as returned by the {elmer} package's `chat`, `stream`,
+#' promise generator (as returned by the 'elmer' package's `chat`, `stream`,
 #' `chat_async`, and `stream_async` methods, respectively).
 #' 
 #' This function should be called from a Shiny app's server. It is generally
@@ -147,9 +147,9 @@ chat_ui <- function(
 #' # Error handling
 #' 
 #' If the `response` argument is a generator, promise, or promise generator, and
-#' an error occurs while producing the message (e.g. an elmer chat object errors
-#' during `stream_async`), the promise returned by `chat_append` will reject
-#' with the error. If the `chat_append` call is the last expression in a Shiny
+#' an error occurs while producing the message (e.g., an iteration in
+#' `stream_async` fails), the promise returned by `chat_append` will reject with
+#' the error. If the `chat_append` call is the last expression in a Shiny
 #' observer, Shiny will see that the observer failed, and end the user session.
 #' If you prefer to handle the error gracefully, use [promises::catch()] on the
 #' promise returned by `chat_append`.
@@ -172,7 +172,7 @@ chat_ui <- function(
 #' library(shinychat)
 #' 
 #' # Dumbest chatbot in the world: ignores user input and chooses
-#' # a random, vague response. For a chatbot, try {elmer}.
+#' # a random, vague response.
 #' fake_chatbot <- async_generator(function(input) {
 #'   responses <- c(
 #'     "What does that suggest to you?",
@@ -253,7 +253,7 @@ chat_append <- function(id, response, role = c("assistant", "user"), session = g
 #' library(shinychat)
 #' 
 #' # Dumbest chatbot in the world: ignores user input and chooses
-#' # a random, vague response. For a chatbot, try {elmer}.
+#' # a random, vague response.
 #' fake_chatbot <- async_generator(function(id, input) {
 #'   responses <- c(
 #'     "What does that suggest to you?",
