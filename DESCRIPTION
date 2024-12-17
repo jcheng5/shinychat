@@ -1,12 +1,14 @@
 Package: shinychat
-Title: Chat UI Component for Shiny
+Title: Chat UI Component for 'Shiny'
 Version: 0.0.0.9000
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = c("aut", "cre")),
     person("Carson", "Sievert", , "carson@posit.co", role = c("aut")),
     person("Posit Software, PBC", role = c("cph", "fnd"))
   )
-Description: Provides a chat UI component for Shiny apps.
+Description: A chat UI component for 'Shiny' apps, well suited for creating
+    chatbot apps based on 'Large Language Models' (LLMs). Designed to work well
+    with the 'elmer' R package for calling LLMs.
 License: MIT + file LICENSE
 URL: https://github.com/jcheng5/shinychat, https://jcheng5.github.io/shinychat/
 BugReports: https://github.com/jcheng5/shinychat/issues

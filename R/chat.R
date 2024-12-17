@@ -82,7 +82,7 @@ chat_ui <- function(
 
   attrs <- rlang::list2(...)
   if (!all(nzchar(rlang::names2(attrs)))) {
-    stop("All arguments in ... must be named.")
+    rlang::abort("All arguments in ... must be named.")
   }
 
   message_tags <- lapply(messages, function(x) {
@@ -90,13 +90,13 @@ chat_ui <- function(
       x <- list(content = x, role = "assistant")
     } else if (is.list(x)) {
       if (!("content" %in% names(x))) {
-        stop("Each message must have a 'content' key.")
+        rlang::abort("Each message must have a 'content' key.")
       }
       if (!("role" %in% names(x))) {
-        stop("Each message must have a 'role' key.")
+        rlang::abort("Each message must have a 'role' key.")
       }
     } else {
-      stop("Each message must be a string or a named list.")
+      rlang::abort("Each message must be a string or a named list.")
     }
 
     if (isTRUE(x[["role"]] == "user")) {
@@ -129,14 +129,65 @@ chat_ui <- function(
   res
 }
 
-#' Append an assistant response to a chat control
+#' Append an assistant response (or user message) to a chat control
 #'
+#' @description
+#' The `chat_append` function appends a message to an existing chat control. The
+#' `response` can be a string, string generator, string promise, or string
+#' promise generator (as returned by the {elmer} package's `chat`, `stream`,
+#' `chat_async`, and `stream_async` methods, respectively).
+#' 
+#' This function should be called from a Shiny app's server. It is generally
+#' used to append the model's response to the chat, while user messages are
+#' added to the chat UI automatically by the front-end. You'd only need to use
+#' `chat_append(role="user")` if you are programmatically generating queries
+#' from the server and sending them on behalf of the user, and want them to be
+#' reflected in the UI.
+#' 
+#' # Error handling
+#' 
+#' If the `response` argument is a generator, promise, or promise generator, and
+#' an error occurs while producing the message (e.g. an elmer chat object errors
+#' during `stream_async`), the promise returned by `chat_append` will reject
+#' with the error. If the `chat_append` call is the last expression in a Shiny
+#' observer, Shiny will see that the observer failed, and end the user session.
+#' If you prefer to handle the error gracefully, use [promises::catch()] on the
+#' promise returned by `chat_append`.
+#' 
 #' @param id The ID of the chat element
 #' @param response The message or message stream to append to the chat element
+#' @param role The role of the message (either "assistant" or "user"). Defaults
+#'   to "assistant".
 #' @param session The Shiny session object
+#' @returns Returns a promise. This promise resolves when the message has been
+#'   successfully sent to the client; note that it does not guarantee that the
+#'   message was actually received or rendered by the client. The promise
+#'   rejects if an error occurs while processing the response (see the "Error
+#'   handling" section).
 #'
+#' @examplesIf interactive()
+#' library(shiny)
+#' library(bslib)
+#' library(elmer)
+#' library(shinychat)
+#'
+#' ui <- page_fillable(
+#'   chat_ui("chat", fill = TRUE)
+#' )
+#'
+#' server <- function(input, output, session) {
+#'   chat <- chat_openai(model = "gpt-4o")
+#' 
+#'   observeEvent(input$chat_user_input, {
+#'     response <- chat$stream_async(input$chat_user_input)
+#'     chat_append("chat", response)
+#'   })
+#' }
+#'
+#' shinyApp(ui, server)
 #' @export
-chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
+chat_append <- function(id, response, role = c("assistant", "user"), session = getDefaultReactiveDomain()) {
+  role <- match.arg(role)
   if (is.character(response)) {
     # string => generator
     stream <- coro::gen(yield(response))
@@ -147,9 +198,9 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
     # Already a generator (sync or async)
     stream <- response
   } else {
-    stop("Unexpected message type; chat_append() expects a string, a string generator, a string promise, or a string promise generator")
+    rlang::abort("Unexpected message type; chat_append() expects a string, a string generator, a string promise, or a string promise generator")
   }
-  chat_append_stream(id, stream, session = session)
+  chat_append_stream(id, stream, role = role, session = session)
 }
 
 #' Low-level function to append a message to a chat control
@@ -172,14 +223,17 @@ chat_append <- function(id, response, session = getDefaultReactiveDomain()) {
 #'   to the latest message. Default is `NULL`.
 #' @param session The Shiny session object
 #'
-#' @returns Returns nothing of consequence.
+#' @returns Returns nothing (\code{invisible(NULL)}).
 #'
 #' @importFrom shiny getDefaultReactiveDomain
 #' @export
 chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, session = getDefaultReactiveDomain()) {
+  if (!is.list(msg)) {
+    rlang::abort("msg must be a named list with 'role' and 'content' fields")
+  }
   if (!isTRUE(msg[["role"]] %in% c("user", "assistant"))) {
     warning("Invalid role argument; must be 'user' or 'assistant'")
-    return()
+    return(invisible(NULL))
   }
 
   if (!isFALSE(chunk)) {
@@ -191,7 +245,7 @@ chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, sessio
     } else if (isTRUE(chunk)) {
       chunk_type <- NULL
     } else {
-      stop("Invalid chunk argument")
+      rlang::abort("Invalid chunk argument")
     }
   } else {
     msg_type <- "shiny-chat-append-message"
@@ -217,16 +271,18 @@ chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, sessio
     handler = msg_type,
     obj = msg
   ))
+
+  invisible(NULL)
 }
 
-chat_append_stream <- function(id, stream, session = getDefaultReactiveDomain()) {
-  result <- chat_append_stream_impl(id, stream, session)
+chat_append_stream <- function(id, stream, role = "assistant", session = getDefaultReactiveDomain()) {
+  result <- chat_append_stream_impl(id, stream, role, session)
   # Handle erroneous result...
   promises::catch(result, function(reason) {
     chat_append_message(
       id,
       list(
-        role = "assistant",
+        role = role,
         content = paste0("\n\n**An error occurred:** ", conditionMessage(reason))
       ),
       chunk = "end",
@@ -245,8 +301,8 @@ chat_append_stream <- function(id, stream, session = getDefaultReactiveDomain())
 utils:::globalVariables(c("generator_env", "exits", "yield"))
 
 chat_append_stream_impl <- NULL
-rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, session = shiny::getDefaultReactiveDomain()) {
-  chat_append_message(id, list(role = "assistant", content = ""), chunk = "start", session = session)
+rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, role = "assistant", session = shiny::getDefaultReactiveDomain()) {
+  chat_append_message(id, list(role = role, content = ""), chunk = "start", session = session)
   for (msg in stream) {
     if (promises::is.promising(msg)) {
       msg <- await(msg)
@@ -254,7 +310,7 @@ rlang::on_load(chat_append_stream_impl <- coro::async(function(id, stream, sessi
     if (coro::is_exhausted(msg)) {
       break
     }
-    chat_append_message(id, list(role = "assistant", content = msg), chunk = TRUE, operation = "append", session = session)
+    chat_append_message(id, list(role = role, content = msg), chunk = TRUE, operation = "append", session = session)
   }
-  chat_append_message(id, list(role = "assistant", content = ""), chunk = "end", operation = "append", session = session)
+  chat_append_message(id, list(role = role, content = ""), chunk = "end", operation = "append", session = session)
 }))

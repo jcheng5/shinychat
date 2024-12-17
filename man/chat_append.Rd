@@ -2,17 +2,75 @@
 % Please edit documentation in R/chat.R
 \name{chat_append}
 \alias{chat_append}
-\title{Append an assistant response to a chat control}
+\title{Append an assistant response (or user message) to a chat control}
 \usage{
-chat_append(id, response, session = getDefaultReactiveDomain())
+chat_append(
+  id,
+  response,
+  role = c("assistant", "user"),
+  session = getDefaultReactiveDomain()
+)
 }
 \arguments{
 \item{id}{The ID of the chat element}
 
 \item{response}{The message or message stream to append to the chat element}
 
+\item{role}{The role of the message (either "assistant" or "user"). Defaults
+to "assistant".}
+
 \item{session}{The Shiny session object}
 }
+\value{
+Returns a promise. This promise resolves when the message has been
+successfully sent to the client; note that it does not guarantee that the
+message was actually received or rendered by the client. The promise
+rejects if an error occurs while processing the response (see the "Error
+handling" section).
+}
 \description{
-Append an assistant response to a chat control
+The \code{chat_append} function appends a message to an existing chat control. The
+\code{response} can be a string, string generator, string promise, or string
+promise generator (as returned by the {elmer} package's \code{chat}, \code{stream},
+\code{chat_async}, and \code{stream_async} methods, respectively).
+
+This function should be called from a Shiny app's server. It is generally
+used to append the model's response to the chat, while user messages are
+added to the chat UI automatically by the front-end. You'd only need to use
+\code{chat_append(role="user")} if you are programmatically generating queries
+from the server and sending them on behalf of the user, and want them to be
+reflected in the UI.
+}
+\section{Error handling}{
+If the \code{response} argument is a generator, promise, or promise generator, and
+an error occurs while producing the message (e.g. an elmer chat object errors
+during \code{stream_async}), the promise returned by \code{chat_append} will reject
+with the error. If the \code{chat_append} call is the last expression in a Shiny
+observer, Shiny will see that the observer failed, and end the user session.
+If you prefer to handle the error gracefully, use \code{\link[promises:then]{promises::catch()}} on the
+promise returned by \code{chat_append}.
+}
+
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+library(shiny)
+library(bslib)
+library(elmer)
+library(shinychat)
+
+ui <- page_fillable(
+  chat_ui("chat", fill = TRUE)
+)
+
+server <- function(input, output, session) {
+  chat <- chat_openai(model = "gpt-4o")
+
+  observeEvent(input$chat_user_input, {
+    response <- chat$stream_async(input$chat_user_input)
+    chat_append("chat", response)
+  })
+}
+
+shinyApp(ui, server)
+\dontshow{\}) # examplesIf}
 }

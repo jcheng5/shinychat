@@ -33,7 +33,7 @@ to the latest message. Default is \code{NULL}.}
 \item{session}{The Shiny session object}
 }
 \value{
-Returns nothing of consequence.
+Returns nothing (\code{invisible(NULL)}).
 }
 \description{
 For advanced users who want to control the message chunking behavior. Most
