@@ -1,3 +1,3 @@
-# shinychat (development version)
+# shinychat 0.1.0
 
 * Initial CRAN submission.
