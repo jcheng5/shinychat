@@ -10,7 +10,13 @@ Chat UI component for [Shiny for R](https://shiny.posit.co/).
 
 ## Installation
 
-You can install the development version of shinychat from [GitHub](https://github.com/) with:
+You can install shinychat from CRAN with:
+
+``` r
+install.packages("shinychat")
+```
+
+Or, install the development version of shinychat from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
