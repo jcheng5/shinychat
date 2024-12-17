@@ -236,16 +236,61 @@ chat_append <- function(id, response, role = c("assistant", "user"), session = g
 #'   `msg` is the first chunk of a multi-chunk message. If `"end"`, then `msg`
 #'   is the last chunk of a multi-chunk message. If `TRUE`, then `msg` is an
 #'   intermediate chunk of a multi-chunk message. Default is `FALSE`.
-#' @param operation The operation to perform on the message. If `NULL`, then
-#'   `msg` replaces the latest message. If `"append"`, then `msg` is appended
-#'   to the latest message. Default is `NULL`.
+#' @param operation The operation to perform on the message. If `"append"`,
+#'   then the new content is appended to the existing message content. If
+#'   `"replace"`, then the existing message content is replaced by the new
+#'   content. Ignored if `chunk` is `FALSE`.
 #' @param session The Shiny session object
 #'
 #' @returns Returns nothing (\code{invisible(NULL)}).
 #'
 #' @importFrom shiny getDefaultReactiveDomain
+#' 
+#' @examplesIf interactive()
+#' library(shiny)
+#' library(coro)
+#' library(bslib)
+#' library(shinychat)
+#' 
+#' # Dumbest chatbot in the world: ignores user input and chooses
+#' # a random, vague response. For a chatbot, try {elmer}.
+#' fake_chatbot <- async_generator(function(id, input) {
+#'   responses <- c(
+#'     "What does that suggest to you?",
+#'     "I see.",
+#'     "I'm not sure I understand you fully.",
+#'     "What do you think?",
+#'     "Can you elaborate on that?",
+#'     "Interesting question! Let's examine thi... **See more**"
+#'   )
+#' 
+#'   # Use low-level chat_append_message() to temporarily set a progress message
+#'   chat_append_message(id, list(role = "assistant", content = "_Thinking..._ "))
+#'   await(async_sleep(1))
+#'   # Clear the progress message
+#'   chat_append_message(id, list(role = "assistant", content = ""), operation = "replace")
+#'
+#'   for (chunk in strsplit(sample(responses, 1), "")[[1]]) {
+#'     yield(chunk)
+#'     await(async_sleep(0.02))
+#'   }
+#' })
+#' 
+#' ui <- page_fillable(
+#'   chat_ui("chat", fill = TRUE)
+#' )
+#' 
+#' server <- function(input, output, session) {
+#'   observeEvent(input$chat_user_input, {
+#'     response <- fake_chatbot("chat", input$chat_user_input)
+#'     chat_append("chat", response)
+#'   })
+#' }
+#' 
+#' shinyApp(ui, server)
+#' 
 #' @export
-chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, session = getDefaultReactiveDomain()) {
+chat_append_message <- function(id, msg, chunk = TRUE, operation = c("append", "replace"), session = getDefaultReactiveDomain()) {
   if (!is.list(msg)) {
     rlang::abort("msg must be a named list with 'role' and 'content' fields")
   }
@@ -274,6 +319,11 @@ chat_append_message <- function(id, msg, chunk = FALSE, operation = NULL, sessio
     content_type <- "markdown"
   } else {
     content_type <- "html"
+  }
+
+  operation <- match.arg(operation)
+  if (identical(operation, "replace")) {
+    operation <- NULL
   }
 
   msg <- list(

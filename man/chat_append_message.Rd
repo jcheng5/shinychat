@@ -7,8 +7,8 @@
 chat_append_message(
   id,
   msg,
-  chunk = FALSE,
-  operation = NULL,
+  chunk = TRUE,
+  operation = c("append", "replace"),
   session = getDefaultReactiveDomain()
 )
 }
@@ -26,9 +26,10 @@ type. If \code{FALSE}, then \code{msg} is a complete message. If \code{"start"},
 is the last chunk of a multi-chunk message. If \code{TRUE}, then \code{msg} is an
 intermediate chunk of a multi-chunk message. Default is \code{FALSE}.}
 
-\item{operation}{The operation to perform on the message. If \code{NULL}, then
-\code{msg} replaces the latest message. If \code{"append"}, then \code{msg} is appended
-to the latest message. Default is \code{NULL}.}
+\item{operation}{The operation to perform on the message. If \code{"append"},
+then the new content is appended to the existing message content. If
+\code{"replace"}, then the existing message content is replaced by the new
+content. Ignored if \code{chunk} is \code{FALSE}.}
 
 \item{session}{The Shiny session object}
 }
@@ -38,4 +39,49 @@ Returns nothing (\code{invisible(NULL)}).
 \description{
 For advanced users who want to control the message chunking behavior. Most
 users should use \code{\link[=chat_append]{chat_append()}} instead.
+}
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+library(shiny)
+library(coro)
+library(bslib)
+library(shinychat)
+
+# Dumbest chatbot in the world: ignores user input and chooses
+# a random, vague response. For a chatbot, try {elmer}.
+fake_chatbot <- async_generator(function(id, input) {
+  responses <- c(
+    "What does that suggest to you?",
+    "I see.",
+    "I'm not sure I understand you fully.",
+    "What do you think?",
+    "Can you elaborate on that?",
+    "Interesting question! Let's examine thi... **See more**"
+  )
+
+  # Use low-level chat_append_message() to temporarily set a progress message
+  chat_append_message(id, list(role = "assistant", content = "_Thinking..._ "))
+  await(async_sleep(1))
+  # Clear the progress message
+  chat_append_message(id, list(role = "assistant", content = ""), operation = "replace")
+
+  for (chunk in strsplit(sample(responses, 1), "")[[1]]) {
+    yield(chunk)
+    await(async_sleep(0.02))
+  }
+})
+
+ui <- page_fillable(
+  chat_ui("chat", fill = TRUE)
+)
+
+server <- function(input, output, session) {
+  observeEvent(input$chat_user_input, {
+    response <- fake_chatbot("chat", input$chat_user_input)
+    chat_append("chat", response)
+  })
+}
+
+shinyApp(ui, server)
+\dontshow{\}) # examplesIf}
 }
